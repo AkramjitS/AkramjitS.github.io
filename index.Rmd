@@ -9,43 +9,167 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Hello there
+# 1 Introduction
 
-+++++ Clean this all up to make it coherent +++++
+Have you ever wanted to make a mobile application. With the recent release of the Flutter API by Google last year it has become easier than ever to make cross platform applications and thus, we want to see what kind of application should we make. Specifically, if we make a free applications, what should it be about, what kind of rating can you expect, how many downloads could you get, and how long ago should be your last update and does it have an impact on rating or downloads?
 
-+++++ Maybe this is the idea +++++
-See how downloads and ratings are affected by other data(including length of title)
+# 2 Setting up your Dataset
 
-In this project we will observe the statistics around Android apps +++++ Add more +++++
-our csv file comes from the following kaggle dataset page: "https://www.kaggle.com/lava18/google-play-store-apps/downloads/google-play-store-apps.zip/6"
+## 2.1 Download your Dataset
 
-In our initial dataset, we imported the play store dataset and found that one of the rows corresponding to the Rating had a misrepresented value where the Rating had value "Free". I removed this row. Then, I removed the rest of the rows in the dataset that had na values in them. This took my then 10840 rows down to 9365 rows. Noting that the number of na rows from ratings was 1474 and 9365 rows + 1474 rows = 10839 rows, then that means that practicly all my rows with missing data did not include data for the ratings column. I discarded this data as ratings information was important to my following analysis.
+We will be downloading our dataset from [Kaggle: Google Play Store Apps](https://www.kaggle.com/lava18/google-play-store-apps). To get the CSV dataset, we will we downloading the zip file with mutliple formats for the data and we want to extract and then use the csv one. Then, we place that in our project directory. 
 
-```{r echo=TRUE}
+## 2.2 Libraries being used
+
+In our project, we will be using several libraries that have been listed below
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
 library(tidyverse)
-print("General Kenobi")
-
-data <- read_csv("googleplaystore.csv")
-
-# removing the one row that mislabels its number of Installs
-data <- data %>% filter(Installs != "Free")
-data %>% nrow()
-#data %>% filter(is.na(App)) #no na's
-#data %>% filter(is.na(Category)) # no na's, 33 group by's
-data %>% filter(is.na(Rating)) %>% nrow() # about 1400 na's
-#data %>% filter(is.na(Reviews)) # only one na
-#data %>% filter(is.na(Size)) # no na's
-#data %>% filter(is.na(Installs)) # 6 na's
-#data %>% filter(is.na(Type)) # 0 na's
-#data %>% filter(is.na(Price)) # 0 na's
-#data %>% filter(is.na('Content Rating')) # 0 na's
-#data %>% filter(is.na(Genres)) # 0 na's
-#data %>% filter(is.na('Last Updated')) # 0 na's
-#data %>% filter(is.na('Current Ver')) # 0 na's
-#data %>% filter(is.na('Android Ver')) # 0 na's
-
-data <- data[rowSums(is.na(data)) == 0,]
-data %>% nrow()
-data %>% head()
-
 ```
+
+## 2.3 Inspecting our data
+
+We proceed to load the csv file into memory and check its columns
+
+```{r}
+# load the data into our dataframe called data
+data <- read_csv("googleplaystore.csv")
+# print out the first few lines to be able to see what kind of data we have
+data %>% head()
+```
+
+When loading our data, one row could not be added to the data. These will be ignored for the fact that our dataset has over 10,000 data points.
+
+The representation of our columns in our data is as follows: \
+    Column name       Description \
+ 1) App -             The application name of the program \
+ 2) Category -        The category the program is tailered towards \
+ 3) Rating -          The score that the program has on the Google Play Store \
+ 4) Reviews -         The number of reviews the program has on teh Google Play Store\
+ 5) Size -            The amount of bytes in memory that the application takes up\
+ 6) Installs -        A lower bound on the number of people who have installed this program\
+ 7) Type -            The payment type of the application(Paid or Free)\
+ 8) Price -           The price of the program, 0 if it is free\
+ 9) Content Rating -  Age group that the program is targeting\
+10) Genres -          Several genres the program belongs to\
+11) Last Updated -    Date when of last update\
+12) Current Ver -     Current version of the program\
+13) Android Ver -     Minimum Android version required to run the program\
+NOTE: The above data is relevant up to the date the data was updated which is Febuary 3, 2019. 
+
+Our data has several problems like missing values indicated by NaN and mislabled data
+
+## 2.4 Tidying our data
+
+### 2.4.1 Removing Paid programs
+
+We first set up our data to be processed by removing the programs that are not Free so that we can modify relavant columns and rows later
+
+```{r}
+# amount of data points before row removals
+data %>% nrow()
+# removing not "Free" rows
+data <- data %>% filter(Type == "Free")
+# checking how many rows remain
+data %>% nrow()
+```
+
+Due to this, we remove about 800 rows which is less than 10% of our data points. This leaves us with more than 10,000 data points which should be sufficient for our analysis
+
+### 2.4.2 Removing unneed columns
+
+The next thing we will do to tidy up our data would be to remove columns we will not be using during our analysis. These columns are: \
+   Column        Reason to Drop \
+1) App -         The name of the program is up to the creator to decide\
+2) Rating -      Reviews and Content Rating cover the need for this\
+3) Size -        Will not be important in our analysis\
+4) Type -        All the programs will be free in our data\
+5) Price -       All the programs will be free in our data\
+6) Genres -      Category is a more focused indicator compared to this\
+7) Current Ver - We want to know if the program has potential to be good from the start, not after several versions\
+
+```{r}
+# removing the above selected columns from data
+data <- data %>% select(-App, -Rating, -Size, -Type, -Price, -Genres, -`Current Ver`)
+# show the remaining columns in the data
+data %>% head()
+```
+
+### 2.4.3 Removing NaN values
+
+Now we will remove rows which don't have a value in their column
+
+```{r}
+# the number of data points before row removal
+data %>% nrow()
+# removing rows with NaN values
+data <- data[rowSums(is.na(data)) == 0,]
+# +++++ remove these lines +++++
+data
+data %>% group_by(Category) %>% summarise()
+data %>% group_by(Installs) %>% summarise()
+data %>% group_by(`Content Rating`) %>% summarise()
+data %>% group_by(`Android Ver`) %>% summarise()
+data %>% filter(`Content Rating` == "Unrated") %>% nrow()
+temp <- data
+temp <- temp %>% filter(substr(`Android Ver`, 1, 3) >= 4.4)
+temp %>% group_by(`Android Ver`) %>% summarise()
+temp %>% nrow()
+# finding out how many rows remain after NaN values are removed
+data %>% nrow()
+```
+
+Since no values in data have value NaN, we do not remove any data points
+
+### 2.4.4 Removing unneeded rows
+
+We will be removing rows where the program is unrated
+
+```{r}
+# the number of data points before row removal
+data %>% nrow()
+# removing rows where content is unrated
+data <- data %>% filter(`Content Rating` != "Unrated")
+# checking how many rows remain
+data %>% nrow()
+```
+
+Because of this, two rows are lost but we still have a sufficient number of data points for our analysis
+
+### 2.4.5 Restructuring our data
+
+Here we reinterpret Last Updated as how many days ago from dataset creaton on Kraggle did the last update happen. 
+
+```{r}
+#data <- data %>% mutate(Days = )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
