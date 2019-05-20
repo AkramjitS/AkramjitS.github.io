@@ -1,0 +1,51 @@
+---
+title: "Android Apps: Ratings and Downloads"
+author: "Akramjit S. Sandhu"
+date: "May 19, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Hello there
+
++++++ Clean this all up to make it coherent +++++
+
++++++ Maybe this is the idea +++++
+See how downloads and ratings are affected by other data(including length of title)
+
+In this project we will observe the statistics around Android apps +++++ Add more +++++
+our csv file comes from the following kaggle dataset page: "https://www.kaggle.com/lava18/google-play-store-apps/downloads/google-play-store-apps.zip/6"
+
+In our initial dataset, we imported the play store dataset and found that one of the rows corresponding to the Rating had a misrepresented value where the Rating had value "Free". I removed this row. Then, I removed the rest of the rows in the dataset that had na values in them. This took my then 10840 rows down to 9365 rows. Noting that the number of na rows from ratings was 1474 and 9365 rows + 1474 rows = 10839 rows, then that means that practicly all my rows with missing data did not include data for the ratings column. I discarded this data as ratings information was important to my following analysis.
+
+```{r echo=TRUE}
+library(tidyverse)
+print("General Kenobi")
+
+data <- read_csv("googleplaystore.csv")
+
+# removing the one row that mislabels its number of Installs
+data <- data %>% filter(Installs != "Free")
+data %>% nrow()
+#data %>% filter(is.na(App)) #no na's
+#data %>% filter(is.na(Category)) # no na's, 33 group by's
+data %>% filter(is.na(Rating)) %>% nrow() # about 1400 na's
+#data %>% filter(is.na(Reviews)) # only one na
+#data %>% filter(is.na(Size)) # no na's
+#data %>% filter(is.na(Installs)) # 6 na's
+#data %>% filter(is.na(Type)) # 0 na's
+#data %>% filter(is.na(Price)) # 0 na's
+#data %>% filter(is.na('Content Rating')) # 0 na's
+#data %>% filter(is.na(Genres)) # 0 na's
+#data %>% filter(is.na('Last Updated')) # 0 na's
+#data %>% filter(is.na('Current Ver')) # 0 na's
+#data %>% filter(is.na('Android Ver')) # 0 na's
+
+data <- data[rowSums(is.na(data)) == 0,]
+data %>% nrow()
+data %>% head()
+
+```
