@@ -1,7 +1,6 @@
 ---
-title: "Android Apps: Ratings and Downloads"
+title: "Android Applications"
 author: "Akramjit S. Sandhu"
-date: "May 19, 2019"
 output: html_document
 ---
 
@@ -34,7 +33,7 @@ library(tidyverse)
 We proceed to load the csv file into memory and check its columns
 
 ```{r}
-# load the data into our dataframe called data
+# load the csv into our dataframe called data
 data <- read_csv("googleplaystore.csv")
 # print out the first few lines to be able to see what kind of data we have
 data %>% head()
@@ -83,16 +82,15 @@ Due to this, we remove about 800 rows which is less than 10% of our data points.
 The next thing we will do to tidy up our data would be to remove columns we will not be using during our analysis. These columns are: \
    Column        Reason to Drop \
 1) App -         The name of the program is up to the creator to decide\
-2) Rating -      Reviews and Content Rating cover the need for this\
-3) Size -        Will not be important in our analysis\
-4) Type -        All the programs will be free in our data\
-5) Price -       All the programs will be free in our data\
-6) Genres -      Category is a more focused indicator compared to this\
-7) Current Ver - We want to know if the program has potential to be good from the start, not after several versions\
+2) Size -        Will not be important in our analysis\
+3) Type -        All the programs will be free in our data\
+4) Price -       All the programs will be free in our data\
+5) Genres -      Category is a more focused indicator compared to this\
+6) Current Ver - We want to know if the program has potential to be good from the start, not after several versions\
 
 ```{r}
 # removing the above selected columns from data
-data <- data %>% select(-App, -Rating, -Size, -Type, -Price, -Genres, -`Current Ver`)
+data <- data %>% select(-App, -Size, -Type, -Price, -Genres, -`Current Ver`)
 # show the remaining columns in the data
 data %>% head()
 ```
@@ -106,22 +104,11 @@ Now we will remove rows which don't have a value in their column
 data %>% nrow()
 # removing rows with NaN values
 data <- data[rowSums(is.na(data)) == 0,]
-# +++++ remove these lines +++++
-data
-data %>% group_by(Category) %>% summarise()
-data %>% group_by(Installs) %>% summarise()
-data %>% group_by(`Content Rating`) %>% summarise()
-data %>% group_by(`Android Ver`) %>% summarise()
-data %>% filter(`Content Rating` == "Unrated") %>% nrow()
-temp <- data
-temp <- temp %>% filter(substr(`Android Ver`, 1, 3) >= 4.4)
-temp %>% group_by(`Android Ver`) %>% summarise()
-temp %>% nrow()
 # finding out how many rows remain after NaN values are removed
 data %>% nrow()
 ```
 
-Since no values in data have value NaN, we do not remove any data points
+Since we still will have 8,000 data points, it is sufficient to continue our analysis
 
 ### 2.4.4 Removing unneeded rows
 
@@ -136,31 +123,215 @@ data <- data %>% filter(`Content Rating` != "Unrated")
 data %>% nrow()
 ```
 
-Because of this, two rows are lost but we still have a sufficient number of data points for our analysis
+Because of this, one row is lost but we still have a sufficient number of data points for our analysis
 
 ### 2.4.5 Restructuring our data
 
 Here we reinterpret Last Updated as how many days ago from dataset creaton on Kraggle did the last update happen. 
 
 ```{r}
-#data <- data %>% mutate(Days = )
+# create new column that calculates days since last update
+data <- data %>% mutate(Days = as.numeric(strptime("February 3, 2019", format="%B %d, %Y") - strptime(`Last Updated`, format="%B %d, %Y")))
+# remove column Last Updated as it is no longer needed
+data <- data %>% select(-`Last Updated`)
+# show the new columns in data
+data %>% head()
 ```
 
+Due to wanting to program with modern Android features that are compatible with almost all Android devices, we limit Android version to be atleast 4.4. We also exclude the ambiguous category called "Varies with device"
 
+```{r}
+# number of data points before row removal
+data %>% nrow()
+# removing unneeded Android Ver programs
+data <- data %>% filter(substr(`Android Ver`, 1, 3) >= 4.4) %>%
+  filter(`Android Ver` != "Varies with device")
+# number of data points remaining
+data %>% nrow()
+```
 
+With this requirement, we have removed most of the data points in our data variable but leaves us with atleast 1,400 data points. This is sufficient for our analysis. 
 
+Now we wish to set the soonest data point to update as day zero, which is the date the data was gathered into a table before being put on Kaggle. Then we only want to look at data that was updated within the last 2 months from that as we will be actively updating our application
 
+```{r}
+data <- data %>% mutate(Days = Days - min(Days))
+data %>% nrow()
+data <- data %>% filter(Days < 60.0)
+data %>% nrow()
+```
 
+This leaves us with almost 1,000 data points which is still sufficient for our analysis
 
+Now we will turn the Installs column into a numeric column as follows for easy manipulation later
 
+```{r}
+# turning Installs into a numeric type by removing "," and "+"
+data <- data %>% transform(Installs = as.numeric(str_replace_all(Installs, "[,+]", "")))
+```
 
+# 3 Exploratory Data Analysis
 
++++++ REMOVE THIS CODE BLOCK +++++
+```{r}
+data %>% head()
+```
 
+## 3.1 Summary Statistics
 
+NOTE: In the following graphs, I display mean as the blue line, first, second, and third quartile as the red lines and the appropriate standard deviations for the graph in purple lines.
 
+### 3.1.1 Statistics for Days
 
+We now show summary statistics and their corresponding graph for Days
 
+```{r, warning=FALSE}
+# calculating quartile statistics
+quartile_df <- data %>%
+  summarise(first=quantile(data$Days, p=1/4),
+            second=quantile(data$Days, p=1/2),
+            third=quantile(data$Days, p=3/4)) %>%
+  tidyr::gather(quartile, value)
 
+# calculating standard deviations from mean and printing them
+sd_df <- data %>%
+  summarize(mean_days = mean(Days), sd_days = sd(Days)) %>%
+  slice(rep_along(seq(-3, 3), 1)) %>%
+  mutate(sd_to_plot=seq(-3, 3)) %>%
+  mutate(sd_val = mean_days + sd_to_plot * sd_days)
+sd_df %>% select(sd_to_plot, sd_val)
+
+# printing several statistics
+summary(data$Days)
+
+# graphing the above calculated statistics on Days
+data %>%
+  ggplot(aes(x=Days)) + 
+  geom_histogram(bins = 60) + 
+  geom_vline(aes(xintercept=value), data=quartile_df, 
+             color = "red") + 
+  geom_vline(aes(xintercept=mean(data$Days)), color = "blue") +
+  geom_vline(aes(xintercept = sd_val), data=filter(sd_df, sd_val >= 0),
+               linetype=2, color="purple") + 
+  labs(title="Frequency of days from last update", x = "Days from last update", y="Count")
+
+```
+
+As we can see, the Days dataset is skewed right as the distance from first quartile to second quartile is more than half the distance from second quartile to third quartile. 
+
+### 3.1.2 Statistics for Reviews
+
+We now show summary statistics and their corresponding graph for Reviews
+
+```{r, warning=FALSE}
+# calculating quartile statistics
+quartile_df <- data %>%
+  summarise(first=quantile(data$Reviews, p=1/4),
+            second=quantile(data$Reviews, p=1/2),
+            third=quantile(data$Reviews, p=3/4)) %>%
+  tidyr::gather(quartile, value)
+
+# calculating standard deviations from mean and printing them
+sd_df <- data %>%
+  summarize(mean_reviews = mean(Reviews), sd_reviews = sd(Reviews)) %>%
+  slice(rep_along(seq(-3, 3), 1)) %>%
+  mutate(sd_to_plot=seq(-3, 3)) %>%
+  mutate(sd_val = mean_reviews + sd_to_plot * sd_reviews)
+sd_df %>% select(sd_to_plot, sd_val)
+
+# printing several statistics
+summary(data$Reviews)
+
+# graphing the above calculated statics on Reviews limiting that reviews be less than 2 x 10^7 so it will fit on the plot
+data %>% filter(Reviews < 20000000) %>%
+  ggplot(aes(x=Reviews)) + 
+  geom_histogram(bins = 60) + 
+  geom_vline(aes(xintercept=value), data=quartile_df, 
+             color = "red") + 
+  geom_vline(aes(xintercept=mean(data$Reviews)), color = "blue") +
+  geom_vline(aes(xintercept = sd_val), data=filter(sd_df, sd_val >= 0),
+               linetype=2, color="purple") + 
+  labs(title="Frequency of Reviews", x = "Reviews", y="Count")
+
+```
+
+As we can see, the Reviews dataset is skewed right as the distance from first quartile to second quartile is several times shorter than the distance from second quartile to third quartile. 
+
+### 3.1.3 Statistics for Installs
+
+We now show summary statistics and their corresponding graph for Installs
+
+```{r, warning=FALSE}
+# calculating quartile statistics
+quartile_df <- data %>%
+  summarise(first=quantile(data$Installs, p=1/4),
+            second=quantile(data$Installs, p=1/2),
+            third=quantile(data$Installs, p=3/4)) %>%
+  tidyr::gather(quartile, value)
+
+# calculating standard deviations from mean and printing them
+sd_df <- data %>%
+  summarize(mean_installs = mean(Installs), sd_installs = sd(Installs)) %>%
+  slice(rep_along(seq(-3, 3), 1)) %>%
+  mutate(sd_to_plot=seq(-3, 3)) %>%
+  mutate(sd_val = mean_installs + sd_to_plot * sd_installs)
+sd_df %>% select(sd_to_plot, sd_val)
+
+# printing several statistics
+summary(data$Installs)
+
+# graphing the above calculated statistics on Installs
+data %>%
+  ggplot(aes(x=Installs)) + 
+  geom_histogram(bins = 60) + 
+  geom_vline(aes(xintercept=value), data=quartile_df, 
+             color = "red") + 
+  geom_vline(aes(xintercept=mean(data$Installs)), color = "blue") +
+  geom_vline(aes(xintercept = sd_val), data=filter(sd_df, sd_val >= 0),
+               linetype=2, color="purple") + 
+  labs(title="Frequency of Installs", x = "Installs", y="Count")
+
+```
+
+As we can see, the Installs dataset is skewed left as the distance from first quartile to second quartile is five times longer than the distance from second quartile to third quartile. 
+
+### 3.1.4 Statistics for Rating
+
+We now show summary statistics and their corresponding graph for Rating
+
+```{r, warning=FALSE}
+# calculating quartile statistics
+quartile_df <- data %>%
+  summarise(first=quantile(data$Rating, p=1/4),
+            second=quantile(data$Rating, p=1/2),
+            third=quantile(data$Rating, p=3/4)) %>%
+  tidyr::gather(quartile, value)
+
+# calculating standard deviations from mean and printing them
+sd_df <- data %>%
+  summarize(mean_rating = mean(Rating), sd_rating = sd(Rating)) %>%
+  slice(rep_along(seq(-3, 3), 1)) %>%
+  mutate(sd_to_plot=seq(-3, 3)) %>%
+  mutate(sd_val = mean_rating + sd_to_plot * sd_rating)
+sd_df %>% select(sd_to_plot, sd_val)
+
+# printing several statistics
+summary(data$Rating)
+
+# graphing the above calculated statistics on Rating
+data %>%
+  ggplot(aes(x=Rating)) + 
+  geom_histogram(bins = 60) + 
+  geom_vline(aes(xintercept=value), data=quartile_df, 
+             color = "red") + 
+  geom_vline(aes(xintercept=mean(data$Rating)), color = "blue") +
+  geom_vline(aes(xintercept = sd_val), data=filter(sd_df, sd_val >= 0),
+               linetype=2, color="purple") + 
+  labs(title="Frequency of Rating", x = "Rating", y="Count")
+
+```
+
+As we can see, the Ratings Dataset does not seem to be skewed in either direction. This is because the distance from the first quartile to the second quartile is the same from the second quartile to the third quartile
 
 
 
