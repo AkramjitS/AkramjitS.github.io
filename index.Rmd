@@ -547,10 +547,10 @@ We have models that tell us with statistical confidence that there are propertie
 
 ```{r}
 # inner join positive estimate rows from fitting on Ratings and Installs to see what properties increases both
-filter(fit_ratings, estimate > 0) %>% inner_join(filter(fit_installs, estimate > 0), by="term")
+filter(fit_ratings, estimate > 0) %>% inner_join(filter(fit_installs, estimate > 0), by="term") %>% select(term, estimate.x, estimate.y) %>% print(n=1e9, width=1e9)
 
 # inner join negative estimate rows from fitting on Ratings and Installs to see what properties decreases both
-filter(fit_ratings, estimate < 0) %>% inner_join(filter(fit_installs, estimate < 0), by="term")
+filter(fit_ratings, estimate < 0) %>% inner_join(filter(fit_installs, estimate < 0), by="term") %>% select(term, estimate.x, estimate.y) %>% print(n=1e9, width=1e9)
 ```
 
 Thus, these two tables tell us that the only properties that positively effect both are a subset of the Categories. These are: BEAUTY, EDUCATION, HEALTH AND FITNESS, HOUSE AND HOUSE, PHOTOGRAPHY, and SHOPPING. 
@@ -558,7 +558,7 @@ The properties that negatively effect both are a subset of the Categories: AUTO 
 
 Thus, we have seen how many different properties can effect how the rating of your program and the number of installs it has can vary. We have seen what properties to thrive for to improve rating, or number of installs, or both with statistical confidence. We have also seen how some properties relavant to your program are distributed and what those corresponding distributions are and thus, what you should expect from those values when you launch your program. 
 
-
++++++ MAYBE ADD mean and other vline data for log shifted graphs +++++
 
 
 

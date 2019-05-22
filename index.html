@@ -666,6 +666,32 @@ data %&gt;% compute_skew_stat(log_Installs)</code></pre>
 <p>Since the absolute value of skew is less than 1, then the log shifted Days dataset is a better dataset to make inferences on.</p>
 </div>
 </div>
+</div>
+<div id="readjusting-our-data" class="section level1">
+<h1>3.2.4 Readjusting our data</h1>
+<p>We now readjust our data depending on if our original skewed dataset could be transformed by a log shift to a data set that is not skewed</p>
+<pre class="r"><code># remove Days and Installs as their log shifter versions are better to use
+data &lt;- data %&gt;% select(-Days, -Installs)
+
+# remove the log shifted version of reviews because it is not better than Reviews
+data &lt;- data %&gt;% select(-log_Reviews)
+
+# print out our current columns
+data %&gt;% head()</code></pre>
+<pre><code>##            Category Rating Reviews Content.Rating Android.Ver log_Days
+## 1    ART_AND_DESIGN    4.3     967       Everyone  4.4 and up 5.643856
+## 2    ART_AND_DESIGN    4.6    4326       Everyone  4.4 and up 5.459432
+## 3    ART_AND_DESIGN    4.7    8145       Everyone  4.4 and up 2.807355
+## 4 AUTO_AND_VEHICLES    4.4     805       Everyone  4.4 and up 3.459432
+## 5 AUTO_AND_VEHICLES    3.9    3971       Everyone  4.4 and up 3.321928
+## 6 AUTO_AND_VEHICLES    3.9     295       Everyone  4.4 and up 3.321928
+##   log_Installs
+## 1     16.60965
+## 2     16.60965
+## 3     18.93157
+## 4     15.60967
+## 5     16.60965
+## 6     13.28786</code></pre>
 <div id="hypothesis-testing" class="section level2">
 <h2>3.3 Hypothesis Testing</h2>
 <div id="testing-installs-based-on-ratings" class="section level3">
@@ -723,10 +749,16 @@ z_score</code></pre>
 <h1>4 Machine Learning analysis</h1>
 <div id="linear-regression" class="section level2">
 <h2>4.1 Linear Regression</h2>
-<div id="add-a-title" class="section level3">
-<h3>4.1.1 +++++ ADD A TITLE ++++++</h3>
-<pre class="r"><code>fit &lt;- lm(Rating~., data=data) %&gt;% tidy()
-fit %&gt;% knitr::kable()</code></pre>
+<p>We will not attempt to put linear regression models to approximate several data values and see how is there is a correlation between predictors and responses in our models.</p>
+<div id="linear-regression-statistics-on-ratings" class="section level3">
+<h3>4.1.1 Linear Regression statistics on Ratings</h3>
+<p>We now try to fit a linear regression line to our data for Ratings. We then see what values from our model we believe are statistically significant enough to include in our final model.</p>
+<pre class="r"><code># fit a line to our data with Rating being output and the rest of the variables being input. 
+fit_ratings &lt;- lm(Rating~1 + ., data=data) %&gt;% tidy()
+
+# select only the variables that have a statistics effect on Rating to be in our linear model so it is easier to see what effects model
+fit_ratings &lt;- fit_ratings %&gt;% filter(p.value &gt;= 0.05)
+fit_ratings %&gt;% knitr::kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -739,358 +771,319 @@ fit %&gt;% knitr::kable()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">(Intercept)</td>
-<td align="right">5.1907513</td>
-<td align="right">0.5094664</td>
-<td align="right">10.1886040</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
 <td align="left">CategoryAUTO_AND_VEHICLES</td>
-<td align="right">-0.2025117</td>
-<td align="right">0.2643472</td>
-<td align="right">-0.7660823</td>
-<td align="right">0.4438193</td>
+<td align="right">-0.2350688</td>
+<td align="right">0.2896197</td>
+<td align="right">-0.8116464</td>
+<td align="right">0.4171990</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">CategoryBEAUTY</td>
-<td align="right">0.1139930</td>
-<td align="right">0.3806464</td>
-<td align="right">0.2994720</td>
-<td align="right">0.7646460</td>
+<td align="right">0.3123076</td>
+<td align="right">0.4169406</td>
+<td align="right">0.7490459</td>
+<td align="right">0.4540160</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">CategoryBOOKS_AND_REFERENCE</td>
-<td align="right">0.1690183</td>
-<td align="right">0.2944510</td>
-<td align="right">0.5740116</td>
-<td align="right">0.5660970</td>
+<td align="right">0.2120025</td>
+<td align="right">0.3229200</td>
+<td align="right">0.6565170</td>
+<td align="right">0.5116514</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">CategoryBUSINESS</td>
-<td align="right">0.0008821</td>
-<td align="right">0.2328136</td>
-<td align="right">0.0037891</td>
-<td align="right">0.9969776</td>
-</tr>
-<tr class="even">
-<td align="left">CategoryCOMICS</td>
-<td align="right">0.0382448</td>
-<td align="right">0.2765727</td>
-<td align="right">0.1382812</td>
-<td align="right">0.8900477</td>
+<td align="right">0.0403141</td>
+<td align="right">0.2549508</td>
+<td align="right">0.1581250</td>
+<td align="right">0.8743921</td>
 </tr>
 <tr class="odd">
-<td align="left">CategoryCOMMUNICATION</td>
-<td align="right">-0.2307422</td>
-<td align="right">0.2370885</td>
-<td align="right">-0.9732325</td>
-<td align="right">0.3306876</td>
+<td align="left">CategoryCOMICS</td>
+<td align="right">0.1006155</td>
+<td align="right">0.3031100</td>
+<td align="right">0.3319437</td>
+<td align="right">0.7400054</td>
 </tr>
 <tr class="even">
-<td align="left">CategoryDATING</td>
-<td align="right">-0.5375543</td>
-<td align="right">0.2541267</td>
-<td align="right">-2.1153002</td>
-<td align="right">0.0346664</td>
+<td align="left">CategoryCOMMUNICATION</td>
+<td align="right">-0.1395235</td>
+<td align="right">0.2596701</td>
+<td align="right">-0.5373108</td>
+<td align="right">0.5911795</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryEDUCATION</td>
-<td align="right">-0.0896987</td>
-<td align="right">0.2413849</td>
-<td align="right">-0.3716004</td>
-<td align="right">0.7102739</td>
+<td align="right">0.1002970</td>
+<td align="right">0.2642257</td>
+<td align="right">0.3795884</td>
+<td align="right">0.7043362</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryENTERTAINMENT</td>
-<td align="right">-0.2752158</td>
-<td align="right">0.2328998</td>
-<td align="right">-1.1816919</td>
-<td align="right">0.2376262</td>
+<td align="right">-0.1548043</td>
+<td align="right">0.2551044</td>
+<td align="right">-0.6068272</td>
+<td align="right">0.5441114</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryEVENTS</td>
-<td align="right">0.2725770</td>
-<td align="right">0.2693781</td>
-<td align="right">1.0118750</td>
-<td align="right">0.3118576</td>
+<td align="right">0.1739174</td>
+<td align="right">0.2953336</td>
+<td align="right">0.5888845</td>
+<td align="right">0.5560795</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryFAMILY</td>
-<td align="right">-0.1860790</td>
-<td align="right">0.2239130</td>
-<td align="right">-0.8310327</td>
-<td align="right">0.4061657</td>
+<td align="right">-0.1103672</td>
+<td align="right">0.2454184</td>
+<td align="right">-0.4497104</td>
+<td align="right">0.6530224</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryFINANCE</td>
-<td align="right">-0.0655542</td>
-<td align="right">0.2254745</td>
-<td align="right">-0.2907390</td>
-<td align="right">0.7713149</td>
+<td align="right">0.0686322</td>
+<td align="right">0.2471183</td>
+<td align="right">0.2777300</td>
+<td align="right">0.7812804</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryFOOD_AND_DRINK</td>
-<td align="right">-0.2387368</td>
-<td align="right">0.2314372</td>
-<td align="right">-1.0315399</td>
-<td align="right">0.3025525</td>
+<td align="right">-0.1549777</td>
+<td align="right">0.2535943</td>
+<td align="right">-0.6111245</td>
+<td align="right">0.5412641</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryGAME</td>
-<td align="right">-0.1625651</td>
-<td align="right">0.2296870</td>
-<td align="right">-0.7077679</td>
-<td align="right">0.4792645</td>
+<td align="right">-0.0067417</td>
+<td align="right">0.2514985</td>
+<td align="right">-0.0268061</td>
+<td align="right">0.9786200</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryHEALTH_AND_FITNESS</td>
-<td align="right">-0.1160437</td>
-<td align="right">0.2278900</td>
-<td align="right">-0.5092094</td>
-<td align="right">0.6107247</td>
+<td align="right">0.0192826</td>
+<td align="right">0.2494727</td>
+<td align="right">0.0772933</td>
+<td align="right">0.9384066</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryHOUSE_AND_HOME</td>
-<td align="right">0.0632820</td>
-<td align="right">0.2491443</td>
-<td align="right">0.2539975</td>
-<td align="right">0.7995529</td>
+<td align="right">0.1422994</td>
+<td align="right">0.2728700</td>
+<td align="right">0.5214914</td>
+<td align="right">0.6021467</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryLIBRARIES_AND_DEMO</td>
-<td align="right">-0.3470170</td>
-<td align="right">0.3348579</td>
-<td align="right">-1.0363111</td>
-<td align="right">0.3003230</td>
+<td align="right">-0.1789815</td>
+<td align="right">0.3670639</td>
+<td align="right">-0.4876032</td>
+<td align="right">0.6259440</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryLIFESTYLE</td>
-<td align="right">-0.4343536</td>
-<td align="right">0.2317571</td>
-<td align="right">-1.8741757</td>
-<td align="right">0.0612155</td>
+<td align="right">-0.4154692</td>
+<td align="right">0.2540491</td>
+<td align="right">-1.6353892</td>
+<td align="right">0.1023005</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryMAPS_AND_NAVIGATION</td>
-<td align="right">-0.5345563</td>
-<td align="right">0.3109251</td>
-<td align="right">-1.7192446</td>
-<td align="right">0.0858984</td>
+<td align="right">-0.4745923</td>
+<td align="right">0.3409821</td>
+<td align="right">-1.3918393</td>
+<td align="right">0.1642986</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryMEDICAL</td>
-<td align="right">-0.1200473</td>
-<td align="right">0.2270332</td>
-<td align="right">-0.5287652</td>
-<td align="right">0.5970929</td>
+<td align="right">-0.0899923</td>
+<td align="right">0.2488342</td>
+<td align="right">-0.3616557</td>
+<td align="right">0.7176902</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryNEWS_AND_MAGAZINES</td>
-<td align="right">-0.2861123</td>
-<td align="right">0.2358741</td>
-<td align="right">-1.2129876</td>
-<td align="right">0.2254386</td>
+<td align="right">-0.2175501</td>
+<td align="right">0.2571170</td>
+<td align="right">-0.8461132</td>
+<td align="right">0.3977038</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryPARENTING</td>
-<td align="right">-0.2265662</td>
-<td align="right">0.2830449</td>
-<td align="right">-0.8004606</td>
-<td align="right">0.4236458</td>
+<td align="right">-0.3433759</td>
+<td align="right">0.3102748</td>
+<td align="right">-1.1066830</td>
+<td align="right">0.2687126</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryPERSONALIZATION</td>
-<td align="right">0.1195350</td>
-<td align="right">0.2564055</td>
-<td align="right">0.4661952</td>
-<td align="right">0.6411836</td>
+<td align="right">0.2097646</td>
+<td align="right">0.2811267</td>
+<td align="right">0.7461570</td>
+<td align="right">0.4557581</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryPHOTOGRAPHY</td>
-<td align="right">-0.0398567</td>
-<td align="right">0.2360465</td>
-<td align="right">-0.1688509</td>
-<td align="right">0.8659502</td>
+<td align="right">0.0235264</td>
+<td align="right">0.2588650</td>
+<td align="right">0.0908829</td>
+<td align="right">0.9276049</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryPRODUCTIVITY</td>
-<td align="right">-0.1174992</td>
-<td align="right">0.2293075</td>
-<td align="right">-0.5124090</td>
-<td align="right">0.6084849</td>
+<td align="right">-0.1517030</td>
+<td align="right">0.2513097</td>
+<td align="right">-0.6036494</td>
+<td align="right">0.5462216</td>
 </tr>
 <tr class="odd">
 <td align="left">CategorySHOPPING</td>
-<td align="right">0.0226219</td>
-<td align="right">0.2275242</td>
-<td align="right">0.0994263</td>
-<td align="right">0.9208210</td>
+<td align="right">0.0557004</td>
+<td align="right">0.2495457</td>
+<td align="right">0.2232071</td>
+<td align="right">0.8234226</td>
 </tr>
 <tr class="even">
 <td align="left">CategorySOCIAL</td>
-<td align="right">-0.1912698</td>
-<td align="right">0.2388479</td>
-<td align="right">-0.8008018</td>
-<td align="right">0.4234483</td>
+<td align="right">-0.0820715</td>
+<td align="right">0.2618500</td>
+<td align="right">-0.3134293</td>
+<td align="right">0.7540237</td>
 </tr>
 <tr class="odd">
 <td align="left">CategorySPORTS</td>
-<td align="right">-0.1781979</td>
-<td align="right">0.2277608</td>
-<td align="right">-0.7823907</td>
-<td align="right">0.4341816</td>
+<td align="right">-0.0322048</td>
+<td align="right">0.2494753</td>
+<td align="right">-0.1290901</td>
+<td align="right">0.8973138</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryTOOLS</td>
-<td align="right">-0.0042675</td>
-<td align="right">0.2314429</td>
-<td align="right">-0.0184385</td>
-<td align="right">0.9852929</td>
+<td align="right">-0.0103025</td>
+<td align="right">0.2538465</td>
+<td align="right">-0.0405854</td>
+<td align="right">0.9676350</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryTRAVEL_AND_LOCAL</td>
-<td align="right">-0.2809108</td>
-<td align="right">0.2279123</td>
-<td align="right">-1.2325387</td>
-<td align="right">0.2180554</td>
+<td align="right">-0.2633512</td>
+<td align="right">0.2500364</td>
+<td align="right">-1.0532513</td>
+<td align="right">0.2924950</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryVIDEO_PLAYERS</td>
-<td align="right">-0.2287216</td>
-<td align="right">0.2459066</td>
-<td align="right">-0.9301159</td>
-<td align="right">0.3525493</td>
+<td align="right">-0.1792623</td>
+<td align="right">0.2697220</td>
+<td align="right">-0.6646189</td>
+<td align="right">0.5064564</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryWEATHER</td>
-<td align="right">-0.1233157</td>
-<td align="right">0.2829681</td>
-<td align="right">-0.4357937</td>
-<td align="right">0.6630863</td>
-</tr>
-<tr class="even">
-<td align="left">Reviews</td>
-<td align="right">0.0000000</td>
-<td align="right">0.0000000</td>
-<td align="right">-1.4750683</td>
-<td align="right">0.1405283</td>
-</tr>
-<tr class="odd">
-<td align="left">Installs</td>
-<td align="right">0.0000000</td>
-<td align="right">0.0000000</td>
-<td align="right">3.0308252</td>
-<td align="right">0.0025055</td>
+<td align="right">-0.0922981</td>
+<td align="right">0.3103111</td>
+<td align="right">-0.2974374</td>
+<td align="right">0.7661980</td>
 </tr>
 <tr class="even">
 <td align="left">Content.RatingEveryone</td>
-<td align="right">-0.1065085</td>
-<td align="right">0.4424637</td>
-<td align="right">-0.2407168</td>
-<td align="right">0.8098270</td>
+<td align="right">-0.2399399</td>
+<td align="right">0.4850865</td>
+<td align="right">-0.4946332</td>
+<td align="right">0.6209740</td>
 </tr>
 <tr class="odd">
 <td align="left">Content.RatingEveryone 10+</td>
-<td align="right">-0.2296511</td>
-<td align="right">0.4468103</td>
-<td align="right">-0.5139789</td>
-<td align="right">0.6073873</td>
+<td align="right">-0.3265013</td>
+<td align="right">0.4899538</td>
+<td align="right">-0.6663921</td>
+<td align="right">0.5053232</td>
 </tr>
 <tr class="even">
 <td align="left">Content.RatingMature 17+</td>
-<td align="right">-0.2730444</td>
-<td align="right">0.4515991</td>
-<td align="right">-0.6046168</td>
-<td align="right">0.5455793</td>
+<td align="right">-0.2994223</td>
+<td align="right">0.4951484</td>
+<td align="right">-0.6047122</td>
+<td align="right">0.5455154</td>
 </tr>
 <tr class="odd">
 <td align="left">Content.RatingTeen</td>
-<td align="right">-0.2150446</td>
-<td align="right">0.4450281</td>
-<td align="right">-0.4832157</td>
-<td align="right">0.6290549</td>
+<td align="right">-0.2801364</td>
+<td align="right">0.4880100</td>
+<td align="right">-0.5740382</td>
+<td align="right">0.5660786</td>
 </tr>
 <tr class="even">
 <td align="left">Android.Ver4.4W and up</td>
-<td align="right">0.2180690</td>
-<td align="right">0.3150585</td>
-<td align="right">0.6921540</td>
-<td align="right">0.4890112</td>
+<td align="right">0.1310519</td>
+<td align="right">0.3454711</td>
+<td align="right">0.3793427</td>
+<td align="right">0.7045186</td>
 </tr>
 <tr class="odd">
 <td align="left">Android.Ver5.0 and up</td>
-<td align="right">-0.0065386</td>
-<td align="right">0.0309710</td>
-<td align="right">-0.2111186</td>
-<td align="right">0.8328404</td>
+<td align="right">-0.0294289</td>
+<td align="right">0.0338182</td>
+<td align="right">-0.8702099</td>
+<td align="right">0.3844067</td>
 </tr>
 <tr class="even">
 <td align="left">Android.Ver5.1 and up</td>
-<td align="right">0.2561196</td>
-<td align="right">0.1504471</td>
-<td align="right">1.7023892</td>
-<td align="right">0.0890123</td>
+<td align="right">0.1741403</td>
+<td align="right">0.1649358</td>
+<td align="right">1.0558065</td>
+<td align="right">0.2913265</td>
 </tr>
 <tr class="odd">
 <td align="left">Android.Ver6.0 and up</td>
-<td align="right">0.1022840</td>
-<td align="right">0.0911922</td>
-<td align="right">1.1216309</td>
-<td align="right">0.2623052</td>
+<td align="right">0.0869840</td>
+<td align="right">0.1000242</td>
+<td align="right">0.8696302</td>
+<td align="right">0.3847233</td>
 </tr>
 <tr class="even">
 <td align="left">Android.Ver7.0 and up</td>
-<td align="right">0.0664941</td>
-<td align="right">0.1218999</td>
-<td align="right">0.5454811</td>
-<td align="right">0.5855518</td>
+<td align="right">-0.1433660</td>
+<td align="right">0.1326768</td>
+<td align="right">-1.0805655</td>
+<td align="right">0.2801661</td>
 </tr>
 <tr class="odd">
 <td align="left">Android.Ver7.1 and up</td>
-<td align="right">-0.1917428</td>
-<td align="right">0.3190143</td>
-<td align="right">-0.6010476</td>
-<td align="right">0.5479529</td>
+<td align="right">-0.5078510</td>
+<td align="right">0.3489699</td>
+<td align="right">-1.4552859</td>
+<td align="right">0.1459222</td>
 </tr>
 <tr class="even">
 <td align="left">Android.Ver8.0 and up</td>
-<td align="right">0.1817072</td>
-<td align="right">0.3145958</td>
-<td align="right">0.5775895</td>
-<td align="right">0.5636794</td>
+<td align="right">0.1115106</td>
+<td align="right">0.3450513</td>
+<td align="right">0.3231711</td>
+<td align="right">0.7466372</td>
 </tr>
 <tr class="odd">
-<td align="left">Days</td>
-<td align="right">0.0026399</td>
-<td align="right">0.0027144</td>
-<td align="right">0.9725750</td>
-<td align="right">0.3310142</td>
-</tr>
-<tr class="even">
-<td align="left">log_Days</td>
-<td align="right">-0.0627314</td>
-<td align="right">0.0346823</td>
-<td align="right">-1.8087420</td>
-<td align="right">0.0708098</td>
-</tr>
-<tr class="odd">
-<td align="left">log_Reviews</td>
-<td align="right">0.1485229</td>
-<td align="right">0.0107008</td>
-<td align="right">13.8796196</td>
-<td align="right">0.0000000</td>
-</tr>
-<tr class="even">
 <td align="left">log_Installs</td>
-<td align="right">-0.1313967</td>
-<td align="right">0.0105126</td>
-<td align="right">-12.4989331</td>
-<td align="right">0.0000000</td>
+<td align="right">0.0046030</td>
+<td align="right">0.0038616</td>
+<td align="right">1.1919959</td>
+<td align="right">0.2335621</td>
 </tr>
 </tbody>
 </table>
-<pre class="r"><code>fit %&gt;% filter(p.value &gt;= 0.5) %&gt;% knitr::kable()</code></pre>
+<p>Thus, we are now statistically confident that ratings will improve or decrease according to our model by the amount corresponding to the estimate of our term. Thus, Categories like COMICS, EDUCATION, and PHOTOGRAPHY, among many others improve the Rating of a program. Other Categories like ENTERTAINMENT, FAMILY, and PARENTING, among many others, decline the Rating of a program. Beyond Categories, the Content Rating of an app will decrease the Rating of your program but choosing EVERYONE for this will demote it the least. The optimal Android Version that should be supported is atleast 5.1 with 4.4W coming as runner up. We also see that the number of installs that your program has can positively effect your programs Rating.</p>
+</div>
+<div id="linear-regression-statistics-on-installs" class="section level3">
+<h3>4.1.2 Linear Regression statistics on Installs</h3>
+<p>We now try to fit a linear regression line to our data for Installs. We then see what values from our model we believe are statistically significant enough to include in our final model. Because we are representing Installs by its log shifted equivalence, we acknowledge that increases and decreases in log_Installs correspond to increases or decreases in Installs which lets us easily interpret the following results.</p>
+<pre class="r"><code># fit a line to our data with Rating being output and the rest of the variables being input. 
+fit_installs &lt;- lm(log_Installs~1 + ., data=data) %&gt;% tidy()
+
+# select only the variables that have a statistics effect on Rating to be in our linear model so it is easier to see what effects model
+fit_installs &lt;- fit_installs %&gt;% filter(p.value &gt;= 0.05)
+fit_installs %&gt;% knitr::kable()</code></pre>
 <table>
 <thead>
 <tr class="header">
@@ -1103,170 +1096,330 @@ fit %&gt;% knitr::kable()</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">CategoryBEAUTY</td>
-<td align="right">0.1139930</td>
-<td align="right">0.3806464</td>
-<td align="right">0.2994720</td>
-<td align="right">0.7646460</td>
+<td align="left">CategoryAUTO_AND_VEHICLES</td>
+<td align="right">-0.4874650</td>
+<td align="right">2.4387321</td>
+<td align="right">-0.1998846</td>
+<td align="right">0.8416138</td>
 </tr>
 <tr class="even">
-<td align="left">CategoryBOOKS_AND_REFERENCE</td>
-<td align="right">0.1690183</td>
-<td align="right">0.2944510</td>
-<td align="right">0.5740116</td>
-<td align="right">0.5660970</td>
+<td align="left">CategoryBEAUTY</td>
+<td align="right">1.6490269</td>
+<td align="right">3.5103158</td>
+<td align="right">0.4697660</td>
+<td align="right">0.6386306</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryBUSINESS</td>
-<td align="right">0.0008821</td>
-<td align="right">0.2328136</td>
-<td align="right">0.0037891</td>
-<td align="right">0.9969776</td>
+<td align="right">-1.3743465</td>
+<td align="right">2.1456639</td>
+<td align="right">-0.6405227</td>
+<td align="right">0.5219881</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryCOMICS</td>
-<td align="right">0.0382448</td>
-<td align="right">0.2765727</td>
-<td align="right">0.1382812</td>
-<td align="right">0.8900477</td>
+<td align="right">-2.5271138</td>
+<td align="right">2.5503153</td>
+<td align="right">-0.9909025</td>
+<td align="right">0.3219868</td>
 </tr>
 <tr class="odd">
+<td align="left">CategoryCOMMUNICATION</td>
+<td align="right">3.3857178</td>
+<td align="right">2.1833845</td>
+<td align="right">1.5506741</td>
+<td align="right">0.1213146</td>
+</tr>
+<tr class="even">
 <td align="left">CategoryEDUCATION</td>
-<td align="right">-0.0896987</td>
-<td align="right">0.2413849</td>
-<td align="right">-0.3716004</td>
-<td align="right">0.7102739</td>
+<td align="right">3.1906936</td>
+<td align="right">2.2219214</td>
+<td align="right">1.4360065</td>
+<td align="right">0.1513314</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryENTERTAINMENT</td>
+<td align="right">1.2309409</td>
+<td align="right">2.1474394</td>
+<td align="right">0.5732133</td>
+<td align="right">0.5666366</td>
+</tr>
+<tr class="even">
+<td align="left">CategoryEVENTS</td>
+<td align="right">-3.6234228</td>
+<td align="right">2.4836930</td>
+<td align="right">-1.4588852</td>
+<td align="right">0.1449290</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryFAMILY</td>
+<td align="right">-0.7305193</td>
+<td align="right">2.0659448</td>
+<td align="right">-0.3536006</td>
+<td align="right">0.7237171</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryFINANCE</td>
-<td align="right">-0.0655542</td>
-<td align="right">0.2254745</td>
-<td align="right">-0.2907390</td>
-<td align="right">0.7713149</td>
+<td align="right">-0.5298375</td>
+<td align="right">2.0801830</td>
+<td align="right">-0.2547072</td>
+<td align="right">0.7990047</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryFOOD_AND_DRINK</td>
+<td align="right">1.8157914</td>
+<td align="right">2.1342873</td>
+<td align="right">0.8507718</td>
+<td align="right">0.3951117</td>
+</tr>
+<tr class="even">
+<td align="left">CategoryGAME</td>
+<td align="right">0.7723521</td>
+<td align="right">2.1168924</td>
+<td align="right">0.3648519</td>
+<td align="right">0.7153036</td>
 </tr>
 <tr class="odd">
 <td align="left">CategoryHEALTH_AND_FITNESS</td>
-<td align="right">-0.1160437</td>
-<td align="right">0.2278900</td>
-<td align="right">-0.5092094</td>
-<td align="right">0.6107247</td>
+<td align="right">1.6684842</td>
+<td align="right">2.0992932</td>
+<td align="right">0.7947838</td>
+<td align="right">0.4269388</td>
 </tr>
 <tr class="even">
 <td align="left">CategoryHOUSE_AND_HOME</td>
-<td align="right">0.0632820</td>
-<td align="right">0.2491443</td>
-<td align="right">0.2539975</td>
-<td align="right">0.7995529</td>
+<td align="right">1.9056308</td>
+<td align="right">2.2964340</td>
+<td align="right">0.8298217</td>
+<td align="right">0.4068492</td>
 </tr>
 <tr class="odd">
+<td align="left">CategoryLIBRARIES_AND_DEMO</td>
+<td align="right">0.6385859</td>
+<td align="right">3.0901552</td>
+<td align="right">0.2066517</td>
+<td align="right">0.8363264</td>
+</tr>
+<tr class="even">
+<td align="left">CategoryLIFESTYLE</td>
+<td align="right">-0.2210243</td>
+<td align="right">2.1415232</td>
+<td align="right">-0.1032089</td>
+<td align="right">0.9178191</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryMAPS_AND_NAVIGATION</td>
+<td align="right">-0.5228984</td>
+<td align="right">2.8731776</td>
+<td align="right">-0.1819931</td>
+<td align="right">0.8556272</td>
+</tr>
+<tr class="even">
 <td align="left">CategoryMEDICAL</td>
-<td align="right">-0.1200473</td>
-<td align="right">0.2270332</td>
-<td align="right">-0.5287652</td>
-<td align="right">0.5970929</td>
+<td align="right">-2.5576275</td>
+<td align="right">2.0931057</td>
+<td align="right">-1.2219294</td>
+<td align="right">0.2220390</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryNEWS_AND_MAGAZINES</td>
+<td align="right">-0.9992505</td>
+<td align="right">2.1649110</td>
+<td align="right">-0.4615665</td>
+<td align="right">0.6444984</td>
 </tr>
 <tr class="even">
+<td align="left">CategoryPARENTING</td>
+<td align="right">-1.8620874</td>
+<td align="right">2.6127925</td>
+<td align="right">-0.7126809</td>
+<td align="right">0.4762191</td>
+</tr>
+<tr class="odd">
 <td align="left">CategoryPERSONALIZATION</td>
-<td align="right">0.1195350</td>
-<td align="right">0.2564055</td>
-<td align="right">0.4661952</td>
-<td align="right">0.6411836</td>
+<td align="right">-0.5798103</td>
+<td align="right">2.3670638</td>
+<td align="right">-0.2449492</td>
+<td align="right">0.8065490</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">CategoryPHOTOGRAPHY</td>
-<td align="right">-0.0398567</td>
-<td align="right">0.2360465</td>
-<td align="right">-0.1688509</td>
-<td align="right">0.8659502</td>
+<td align="right">4.0078375</td>
+<td align="right">2.1751559</td>
+<td align="right">1.8425519</td>
+<td align="right">0.0657076</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">CategoryPRODUCTIVITY</td>
-<td align="right">-0.1174992</td>
-<td align="right">0.2293075</td>
-<td align="right">-0.5124090</td>
-<td align="right">0.6084849</td>
-</tr>
-<tr class="odd">
-<td align="left">CategorySHOPPING</td>
-<td align="right">0.0226219</td>
-<td align="right">0.2275242</td>
-<td align="right">0.0994263</td>
-<td align="right">0.9208210</td>
+<td align="right">2.8537371</td>
+<td align="right">2.1138220</td>
+<td align="right">1.3500366</td>
+<td align="right">0.1773275</td>
 </tr>
 <tr class="even">
-<td align="left">CategoryTOOLS</td>
-<td align="right">-0.0042675</td>
-<td align="right">0.2314429</td>
-<td align="right">-0.0184385</td>
-<td align="right">0.9852929</td>
+<td align="left">CategorySHOPPING</td>
+<td align="right">2.5503395</td>
+<td align="right">2.0990194</td>
+<td align="right">1.2150147</td>
+<td align="right">0.2246640</td>
 </tr>
 <tr class="odd">
+<td align="left">CategorySOCIAL</td>
+<td align="right">-0.9957483</td>
+<td align="right">2.2040535</td>
+<td align="right">-0.4517804</td>
+<td align="right">0.6515308</td>
+</tr>
+<tr class="even">
+<td align="left">CategorySPORTS</td>
+<td align="right">1.2021291</td>
+<td align="right">2.0996647</td>
+<td align="right">0.5725339</td>
+<td align="right">0.5670965</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryTOOLS</td>
+<td align="right">0.7093719</td>
+<td align="right">2.1366826</td>
+<td align="right">0.3319969</td>
+<td align="right">0.7399652</td>
+</tr>
+<tr class="even">
+<td align="left">CategoryTRAVEL_AND_LOCAL</td>
+<td align="right">2.3183379</td>
+<td align="right">2.1046179</td>
+<td align="right">1.1015482</td>
+<td align="right">0.2709386</td>
+</tr>
+<tr class="odd">
+<td align="left">CategoryVIDEO_PLAYERS</td>
+<td align="right">1.9793807</td>
+<td align="right">2.2700583</td>
+<td align="right">0.8719515</td>
+<td align="right">0.3834563</td>
+</tr>
+<tr class="even">
 <td align="left">CategoryWEATHER</td>
-<td align="right">-0.1233157</td>
-<td align="right">0.2829681</td>
-<td align="right">-0.4357937</td>
-<td align="right">0.6630863</td>
+<td align="right">0.8905452</td>
+<td align="right">2.6120696</td>
+<td align="right">0.3409347</td>
+<td align="right">0.7332285</td>
+</tr>
+<tr class="odd">
+<td align="left">Rating</td>
+<td align="right">0.3261568</td>
+<td align="right">0.2736224</td>
+<td align="right">1.1919959</td>
+<td align="right">0.2335621</td>
 </tr>
 <tr class="even">
 <td align="left">Content.RatingEveryone</td>
-<td align="right">-0.1065085</td>
-<td align="right">0.4424637</td>
-<td align="right">-0.2407168</td>
-<td align="right">0.8098270</td>
+<td align="right">-0.9917595</td>
+<td align="right">4.0837175</td>
+<td align="right">-0.2428570</td>
+<td align="right">0.8081689</td>
 </tr>
 <tr class="odd">
 <td align="left">Content.RatingEveryone 10+</td>
-<td align="right">-0.2296511</td>
-<td align="right">0.4468103</td>
-<td align="right">-0.5139789</td>
-<td align="right">0.6073873</td>
+<td align="right">2.2474373</td>
+<td align="right">4.1246086</td>
+<td align="right">0.5448850</td>
+<td align="right">0.5859612</td>
 </tr>
 <tr class="even">
 <td align="left">Content.RatingMature 17+</td>
-<td align="right">-0.2730444</td>
-<td align="right">0.4515991</td>
-<td align="right">-0.6046168</td>
-<td align="right">0.5455793</td>
+<td align="right">1.8204014</td>
+<td align="right">4.1684002</td>
+<td align="right">0.4367146</td>
+<td align="right">0.6624181</td>
 </tr>
 <tr class="odd">
 <td align="left">Content.RatingTeen</td>
-<td align="right">-0.2150446</td>
-<td align="right">0.4450281</td>
-<td align="right">-0.4832157</td>
-<td align="right">0.6290549</td>
+<td align="right">1.6777586</td>
+<td align="right">4.1082790</td>
+<td align="right">0.4083848</td>
+<td align="right">0.6830837</td>
 </tr>
 <tr class="even">
+<td align="left">Android.Ver4.4W and up</td>
+<td align="right">-5.3384928</td>
+<td align="right">2.9031063</td>
+<td align="right">-1.8388899</td>
+<td align="right">0.0662450</td>
+</tr>
+<tr class="odd">
 <td align="left">Android.Ver5.0 and up</td>
-<td align="right">-0.0065386</td>
-<td align="right">0.0309710</td>
-<td align="right">-0.2111186</td>
-<td align="right">0.8328404</td>
-</tr>
-<tr class="odd">
-<td align="left">Android.Ver7.0 and up</td>
-<td align="right">0.0664941</td>
-<td align="right">0.1218999</td>
-<td align="right">0.5454811</td>
-<td align="right">0.5855518</td>
+<td align="right">-0.3620861</td>
+<td align="right">0.2845421</td>
+<td align="right">-1.2725222</td>
+<td align="right">0.2035007</td>
 </tr>
 <tr class="even">
-<td align="left">Android.Ver7.1 and up</td>
-<td align="right">-0.1917428</td>
-<td align="right">0.3190143</td>
-<td align="right">-0.6010476</td>
-<td align="right">0.5479529</td>
+<td align="left">Android.Ver5.1 and up</td>
+<td align="right">-0.1113018</td>
+<td align="right">1.3891951</td>
+<td align="right">-0.0801196</td>
+<td align="right">0.9361591</td>
 </tr>
 <tr class="odd">
-<td align="left">Android.Ver8.0 and up</td>
-<td align="right">0.1817072</td>
-<td align="right">0.3145958</td>
-<td align="right">0.5775895</td>
-<td align="right">0.5636794</td>
+<td align="left">Android.Ver6.0 and up</td>
+<td align="right">-1.5664422</td>
+<td align="right">0.8407683</td>
+<td align="right">-1.8631080</td>
+<td align="right">0.0627571</td>
+</tr>
+<tr class="even">
+<td align="left">Android.Ver7.0 and up</td>
+<td align="right">-2.1524686</td>
+<td align="right">1.1153283</td>
+<td align="right">-1.9298968</td>
+<td align="right">0.0539187</td>
+</tr>
+<tr class="odd">
+<td align="left">Android.Ver7.1 and up</td>
+<td align="right">5.2699146</td>
+<td align="right">2.9358153</td>
+<td align="right">1.7950429</td>
+<td align="right">0.0729663</td>
 </tr>
 </tbody>
 </table>
+<p>+++++ Fix this block to correspond to Installs rather than Ratings +++++ Thus, we are now statistically confident that ratings will improve or decrease according to our model by the amount corresponding to the estimate of our term. Thus, Categories like COMICS, EDUCATION, and PHOTOGRAPHY, among many others improve the Rating of a program. Other Categories like ENTERTAINMENT, FAMILY, and PARENTING, among many others, decline the Rating of a program. Beyond Categories, the Content Rating of an app will decrease the Rating of your program but choosing EVERYONE for this will demote it the least. The optimal Android Version that should be supported is atleast 5.1 with 4.4W coming as runner up. We also see that the number of installs that your program has can positively effect your programs Rating.</p>
 </div>
 </div>
+</div>
+<div id="conclusion" class="section level1">
+<h1>5 Conclusion</h1>
+<p>We have models that tell us with statistical confidence that there are properties that improve or decrease Rating and there are properties that improve or decrease Installs. We now show what properties increase both and what properties decrease both.</p>
+<pre class="r"><code># inner join positive estimate rows from fitting on Ratings and Installs to see what properties increases both
+filter(fit_ratings, estimate &gt; 0) %&gt;% inner_join(filter(fit_installs, estimate &gt; 0), by=&quot;term&quot;) %&gt;% select(term, estimate.x, estimate.y) %&gt;% print(n=1e9, width=1e9)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##   term                       estimate.x estimate.y
+##   &lt;chr&gt;                           &lt;dbl&gt;      &lt;dbl&gt;
+## 1 CategoryBEAUTY                 0.312        1.65
+## 2 CategoryEDUCATION              0.100        3.19
+## 3 CategoryHEALTH_AND_FITNESS     0.0193       1.67
+## 4 CategoryHOUSE_AND_HOME         0.142        1.91
+## 5 CategoryPHOTOGRAPHY            0.0235       4.01
+## 6 CategorySHOPPING               0.0557       2.55</code></pre>
+<pre class="r"><code># inner join negative estimate rows from fitting on Ratings and Installs to see what properties decreases both
+filter(fit_ratings, estimate &lt; 0) %&gt;% inner_join(filter(fit_installs, estimate &lt; 0), by=&quot;term&quot;) %&gt;% select(term, estimate.x, estimate.y) %&gt;% print(n=1e9, width=1e9)</code></pre>
+<pre><code>## # A tibble: 11 x 3
+##    term                        estimate.x estimate.y
+##    &lt;chr&gt;                            &lt;dbl&gt;      &lt;dbl&gt;
+##  1 CategoryAUTO_AND_VEHICLES      -0.235      -0.487
+##  2 CategoryFAMILY                 -0.110      -0.731
+##  3 CategoryLIFESTYLE              -0.415      -0.221
+##  4 CategoryMAPS_AND_NAVIGATION    -0.475      -0.523
+##  5 CategoryMEDICAL                -0.0900     -2.56 
+##  6 CategoryNEWS_AND_MAGAZINES     -0.218      -0.999
+##  7 CategoryPARENTING              -0.343      -1.86 
+##  8 CategorySOCIAL                 -0.0821     -0.996
+##  9 Content.RatingEveryone         -0.240      -0.992
+## 10 Android.Ver5.0 and up          -0.0294     -0.362
+## 11 Android.Ver7.0 and up          -0.143      -2.15</code></pre>
+<p>Thus, these two tables tell us that the only properties that positively effect both are a subset of the Categories. These are: BEAUTY, EDUCATION, HEALTH AND FITNESS, HOUSE AND HOUSE, PHOTOGRAPHY, and SHOPPING. The properties that negatively effect both are a subset of the Categories: AUTO AND VEHICLES, FAMILY, LIFESTYLE, MAPS AND NAVIGATION, MEDICAL, NEWS AND MAGAZINES PARENTING, and SOCIAL. Also, Content rating being EVERYONE, and Android version being either 5.0 and above, or 7.0 and above also negatively effect both.</p>
+<p>Thus, we have seen how many different properties can effect how the rating of your program and the number of installs it has can vary. We have seen what properties to thrive for to improve rating, or number of installs, or both with statistical confidence. We have also seen how some properties relavant to your program are distributed and what those corresponding distributions are and thus, what you should expect from those values when you launch your program.</p>
 </div>
 
 
