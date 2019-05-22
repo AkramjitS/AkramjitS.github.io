@@ -26,6 +26,7 @@ In our project, we will be using several libraries that have been listed below
 library(dplyr)
 library(ggplot2)
 library(tidyverse)
+library(broom)
 ```
 
 ## 2.3 Inspecting our data
@@ -181,6 +182,21 @@ data %>% head()
 
 NOTE: In the following graphs, I display mean as the blue line, first, second, and third quartile as the red lines and the appropriate standard deviations for the graph in purple lines.
 
+We will use the following function to calculate skewness of some of our data. This function was provided in lecture notes 22.
+
+```{r}
+compute_skew_stat <- function(df, attribute) {
+  attribute <- enquo(attribute)
+  
+  df %>%
+    summarize(med_attr=median(!!attribute, na.rm=TRUE), 
+              q1_attr=quantile(!!attribute, 1/4, na.rm=TRUE), 
+              q3_attr=quantile(!!attribute, 3/4, na.rm=TRUE)) %>%
+    mutate(d1 = med_attr - q1_attr, d2 = q3_attr - med_attr, skew_stat = d1 - d2) %>%
+    select(d1, d2, skew_stat)
+}
+```
+
 ### 3.1.1 Statistics for Days
 
 We now show summary statistics and their corresponding graph for Days
@@ -215,9 +231,12 @@ data %>%
                linetype=2, color="purple") + 
   labs(title="Frequency of days from last update", x = "Days from last update", y="Count")
 
+# calculating skew
+data %>% compute_skew_stat(Days)
+
 ```
 
-As we can see, the Days dataset is skewed right as the distance from first quartile to second quartile is more than half the distance from second quartile to third quartile. 
+As we can see, the Days dataset is skewed right as the distance from first quartile to second quartile is more than half the distance from second quartile to third quartile. On top of that, the absolute value of our skewness is greater than 1, thus our Days dataset is in fact skewed. 
 
 ### 3.1.2 Statistics for Reviews
 
@@ -253,9 +272,12 @@ data %>% filter(Reviews < 20000000) %>%
                linetype=2, color="purple") + 
   labs(title="Frequency of Reviews", x = "Reviews", y="Count")
 
+# calculating skew
+data %>% compute_skew_stat(Reviews)
+
 ```
 
-As we can see, the Reviews dataset is skewed right as the distance from first quartile to second quartile is several times shorter than the distance from second quartile to third quartile. 
+As we can see, the Reviews dataset is skewed right as the distance from first quartile to second quartile is several times shorter than the distance from second quartile to third quartile. On top of that, the absolute value of our skewness is greater than 1, thus our Reviews dataset is in fact skewed. 
 
 ### 3.1.3 Statistics for Installs
 
@@ -291,9 +313,12 @@ data %>%
                linetype=2, color="purple") + 
   labs(title="Frequency of Installs", x = "Installs", y="Count")
 
+# calculating skew
+data %>% compute_skew_stat(Installs)
+
 ```
 
-As we can see, the Installs dataset is skewed left as the distance from first quartile to second quartile is five times longer than the distance from second quartile to third quartile. 
+As we can see, the Installs dataset is skewed left as the distance from first quartile to second quartile is five times longer than the distance from second quartile to third quartile. On top of that, the absolute value of our skewness is greater than 1, thus our Installs dataset is in fact skewed. 
 
 ### 3.1.4 Statistics for Rating
 
@@ -329,11 +354,209 @@ data %>%
                linetype=2, color="purple") + 
   labs(title="Frequency of Rating", x = "Rating", y="Count")
 
+# calculating skew
+data %>% compute_skew_stat(Rating)
+
 ```
 
-As we can see, the Ratings Dataset does not seem to be skewed in either direction. This is because the distance from the first quartile to the second quartile is the same from the second quartile to the third quartile
+As we can see, the Ratings Dataset does not seem to be skewed in either direction. This is because the distance from the first quartile to the second quartile is the same from the second quartile to the third quartile. On top of that, the absolute value of our skewness is less than 1, thus our Rating dataset is in fact not skewed. 
 
+## 3.2 Skew corrections of graphs
 
+In this section, we attempt to graph the several skewed datasets by log shifting them and then seeing if the resulting datasets are still skewed. 
+Here we prepare data with the log shifted data
+
+```{r}
+# log shift the three skewed data to new columns for later use
+data <- data %>% 
+  mutate(log_Days = log2(Days + 1)) %>%
+  mutate(log_Reviews = log2(Reviews + 1)) %>%
+  mutate(log_Installs = log2(Installs + 1))
+data %>% head()
+```
+
+### 3.2.1 Log shifted Days
+
+We now attempt to see if log shifting Days allows the data to not be skewed and graph the resulting data
+
+```{r}
+# graphing the log shifted data
+data %>%
+  ggplot(aes(x=log_Days)) + 
+  geom_histogram(bins = 60) + 
+  labs(title="Frequency of Log Shifted Days", x = "Log Shifted Days", y="Count")
+
+# calculating skew of log shifted data
+data %>% compute_skew_stat(log_Days)
+
+```
+
+Since the absolute value of skew is less than 1, then the log shifted Days dataset is a better dataset to make inferences on. 
+
+### 3.2.2 Log shifted Reviews
+
+We now attempt to see if log shifting Reviews allows the data to not be skewed and graph the resulting data
+
+```{r}
+# graphing the log shifted data
+data %>%
+  ggplot(aes(x=log_Reviews)) + 
+  geom_histogram(bins = 60) + 
+  labs(title="Frequency of Log Shifted Reviews", x = "Log Shifted Reviews", y="Count")
+
+# calculating skew of log shifted data
+data %>% compute_skew_stat(log_Reviews)
+
+```
+
+Since the absolute value of skew is greater than 1, then the log shifted Days dataset is not a better dataset to use then before log shifting the Reviews dataset
+
+### 3.2.3 Log shifted Installs
+
+We now attempt to see if log shifting Installs allows the data to not be skewed and graph the resulting data
+
+```{r}
+# graphing the log shifted data
+data %>%
+  ggplot(aes(x=log_Installs)) + 
+  geom_histogram(bins = 60) + 
+  labs(title="Frequency of Log Shifted Installs", x = "Log Shifted Installs", y="Count")
+
+# calculating skew of log shifted data
+data %>% compute_skew_stat(log_Installs)
+
+```
+
+Since the absolute value of skew is less than 1, then the log shifted Days dataset is a better dataset to make inferences on. 
+
+# 3.2.4 Readjusting our data
+
+We now readjust our data depending on if our original skewed dataset could be transformed by a log shift to a data set that is not skewed
+
+```{r}
+# remove Days and Installs as their log shifter versions are better to use
+data <- data %>% select(-Days, -Installs)
+
+# remove the log shifted version of reviews because it is not better than Reviews
+data <- data %>% select(-log_Reviews)
+
+# print out our current columns
+data %>% head()
+```
+
+## 3.3 Hypothesis Testing 
+
+### 3.3.1 Testing Installs based on Ratings
+
+I hypothesis that the number of installs is dependant on a high rating, in this case a rating of greater than  or equal to 4.0. Then, we can create a null hypothesis to test this as: a rating of less than 4.0 does not change the amount of install we get. More formally, 
+$$ 
+H_0: \text{Getting a low rating has no effect on installs} \to \mu = \mu_{\text{Installs}} \\
+H_1: \text{Getting a low rating has an effect on installs} \to \mu \ne \mu_{\text{Installs}}
+$$
+Then, in our setup, we use the Reviews column in data for the reviews information and log_Installs for Installs as it can be approximated by a normal curve. Now, assuming $H_0$, 
+
+```{r}
+# calculate the mean of installs in our data
+mean_installs <- mean(data$log_Installs)
+mean_installs
+
+# calculate the mean and sample standard deviation for installs when rating in low
+temp <- data %>% filter(Rating < 4.0)
+mean_rating <- mean(temp$log_Installs)
+mean_rating
+sd_rating <- sd(temp$log_Installs) / sqrt(length(temp$log_Installs))
+sd_rating
+
+# now we calculate the z-score of getting our mean of installs when rating is low against the mean of all installs using the sample standard deviation of installs when ratings is low
+z_score <- (mean_installs - mean_rating) / sd_rating
+z_score
+```
+
+Because the z score that we calculated for our hull hypothesis testing was over 5 standard deviations from the mean of installs when ratings is low, then the probability of this event occurring is much less than 5%, thus we can reject the $H_0$ and accept $H_1$. 
+
+We use 5% for our threshold as is standard in statistics and for our class. 
+
+### 3.3.2 Testing Ratings based on Days since last update
+
+I hypothesis that the value of Rating is dependant on less time between updates, in this case we decide that is 7 days. Then, we can create a null hypothesis to test this as: the amount of days being more than 7 from last update has no effect on Rating. More formally, 
+$$ 
+H_0: \text{Long time between updates has no effect on Rating} \to \mu_{\text{Days}} = \mu_{\text{Rating}} \\
+H_1: \text{Long time between updates has an effect on Rating} \to \mu_{\text{Days}} \ne \mu_{\text{Rating}}
+$$
+Then, in our setup, we use the log_days column in data for the Days as it can be well approximated by a normal curve. I use the Rating column to stand for the rating. Now, assuming $H_0$, 
+
+```{r}
+# calculate the mean of Rating in our data
+mean_installs <- mean(data$Rating)
+mean_installs
+
+# calculate the mean and sample standard deviation for Rating when Days is greater than 7
+temp <- data %>% filter(log_Days > log2(7.0 + 1))
+mean_rating <- mean(temp$Rating)
+mean_rating
+sd_rating <- sd(temp$Rating) / sqrt(length(temp$Rating))
+sd_rating
+
+# now we calculate the z-score of getting our mean of rating when days is large against the mean of all ratings using the sample standard deviation of Rating when Days is large
+z_score <- (mean_installs - mean_rating) / sd_rating
+z_score
+```
+
+Because the z score that we calculated for our hull hypothesis testing was under 2 standard deviations from the mean of Ratings when Days is large, then the probability of this event occurring is much greater than 5%, thus we accept the $H_0$ and instead reject $H_1$
+
+# 4 Machine Learning analysis
+
+## 4.1 Linear Regression
+
+We will not attempt to put linear regression models to approximate several data values and see how is there is a correlation between predictors and responses in our models. 
+
+### 4.1.1 Linear Regression statistics on Ratings
+
+We now try to fit a linear regression line to our data for Ratings. We then see what values from our model we believe are statistically significant enough to include in our final model. 
+
+```{r, warning=FALSE}
+# fit a line to our data with Rating being output and the rest of the variables being input. 
+fit_ratings <- lm(Rating~1 + ., data=data) %>% tidy()
+
+# select only the variables that have a statistics effect on Rating to be in our linear model so it is easier to see what effects model
+fit_ratings <- fit_ratings %>% filter(p.value >= 0.05)
+fit_ratings %>% knitr::kable()
+```
+
+Thus, we are now statistically confident that ratings will improve or decrease according to our model by the amount corresponding to the estimate of our term. Thus, Categories like COMICS, EDUCATION, and  PHOTOGRAPHY, among many others improve the Rating of a program. Other Categories like ENTERTAINMENT, FAMILY, and PARENTING, among many others, decline the Rating of a program. Beyond Categories, the Content Rating of an app will decrease the Rating of your program but choosing EVERYONE for this will demote it the least. The optimal Android Version that should be supported is atleast 5.1 with 4.4W coming as runner up. We also see that the number of installs that your program has can positively effect your programs Rating. 
+
+### 4.1.2 Linear Regression statistics on Installs
+
+We now try to fit a linear regression line to our data for Installs. We then see what values from our model we believe are statistically significant enough to include in our final model. Because we are representing Installs by its log shifted equivalence, we acknowledge that increases and decreases in log_Installs correspond to increases or decreases in Installs which lets us easily interpret the following results. 
+
+```{r, warning=FALSE}
+# fit a line to our data with Rating being output and the rest of the variables being input. 
+fit_installs <- lm(log_Installs~1 + ., data=data) %>% tidy()
+
+# select only the variables that have a statistics effect on Rating to be in our linear model so it is easier to see what effects model
+fit_installs <- fit_installs %>% filter(p.value >= 0.05)
+fit_installs %>% knitr::kable()
+```
+
++++++ Fix this block to correspond to Installs rather than Ratings +++++
+Thus, we are now statistically confident that ratings will improve or decrease according to our model by the amount corresponding to the estimate of our term. Thus, Categories like COMICS, EDUCATION, and  PHOTOGRAPHY, among many others improve the Rating of a program. Other Categories like ENTERTAINMENT, FAMILY, and PARENTING, among many others, decline the Rating of a program. Beyond Categories, the Content Rating of an app will decrease the Rating of your program but choosing EVERYONE for this will demote it the least. The optimal Android Version that should be supported is atleast 5.1 with 4.4W coming as runner up. We also see that the number of installs that your program has can positively effect your programs Rating. 
+
+# 5 Conclusion
+
+We have models that tell us with statistical confidence that there are properties that improve or decrease Rating and there are properties that improve or decrease Installs. We now show what properties increase both and what properties decrease both.
+
+```{r}
+# inner join positive estimate rows from fitting on Ratings and Installs to see what properties increases both
+filter(fit_ratings, estimate > 0) %>% inner_join(filter(fit_installs, estimate > 0), by="term")
+
+# inner join negative estimate rows from fitting on Ratings and Installs to see what properties decreases both
+filter(fit_ratings, estimate < 0) %>% inner_join(filter(fit_installs, estimate < 0), by="term")
+```
+
+Thus, these two tables tell us that the only properties that positively effect both are a subset of the Categories. These are: BEAUTY, EDUCATION, HEALTH AND FITNESS, HOUSE AND HOUSE, PHOTOGRAPHY, and SHOPPING. 
+The properties that negatively effect both are a subset of the Categories: AUTO AND VEHICLES, FAMILY, LIFESTYLE, MAPS AND NAVIGATION, MEDICAL, NEWS AND MAGAZINES PARENTING, and SOCIAL. Also, Content rating being EVERYONE, and Android version being either 5.0 and above, or 7.0 and above also negatively effect both. 
+
+Thus, we have seen how many different properties can effect how the rating of your program and the number of installs it has can vary. We have seen what properties to thrive for to improve rating, or number of installs, or both with statistical confidence. We have also seen how some properties relavant to your program are distributed and what those corresponding distributions are and thus, what you should expect from those values when you launch your program. 
 
 
 
