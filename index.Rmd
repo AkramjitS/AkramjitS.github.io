@@ -1,5 +1,5 @@
 ---
-title: "Android Applications"
+title: "What to Focus on when Creating an Android Application"
 author: "Akramjit S. Sandhu"
 output: html_document
 ---
@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # 1 Introduction
 
-Have you ever wanted to make a mobile application. With the recent release of the Flutter API by Google last year it has become easier than ever to make cross platform applications and thus, we want to see what kind of application should we make. Specifically, if we make a free applications, what should it be about, what kind of rating can you expect, how many downloads could you get, and how long ago should be your last update and does it have an impact on rating or downloads?
+Have you ever wanted to make a mobile application? With the recent release of the Flutter API, now it is a lot easier to make cross platform applications for IOS and Android. Added to this, with React Native and Xamarin, you can easily create cross platform apps with one single code base. Then, if you make an app, what points should you focus on to maximize your apps rating and number of downloads and how do other factors in your application reflect these two items. We proceed to show you several statistics that will assist you when creating your new app. In particular, we will be focusing on the Android ecosystem because there are many more Android phone in use compared to IOS worldwide.
 
 # 2 Setting up your Dataset
 
@@ -59,7 +59,7 @@ The representation of our columns in our data is as follows: \
 13) Android Ver -     Minimum Android version required to run the program\
 NOTE: The above data is relevant up to the date the data was updated which is Febuary 3, 2019. 
 
-Our data has several problems like missing values indicated by NaN and mislabled data
+Our data has several problems like missing values indicated by NaN and mislabled data.
 
 ## 2.4 Tidying our data
 
@@ -76,7 +76,7 @@ data <- data %>% filter(Type == "Free")
 data %>% nrow()
 ```
 
-Due to this, we remove about 800 rows which is less than 10% of our data points. This leaves us with more than 10,000 data points which should be sufficient for our analysis
+Due to this, we remove about 800 rows which is less than 10% of our data points. This leaves us with more than 10,000 data points which should be sufficient for our analysis.
 
 ### 2.4.2 Removing unneed columns
 
@@ -98,7 +98,7 @@ data %>% head()
 
 ### 2.4.3 Removing NaN values
 
-Now we will remove rows which don't have a value in their column
+Now we will remove rows which don't have a value some of their column(s)
 
 ```{r}
 # the number of data points before row removal
@@ -109,11 +109,11 @@ data <- data[rowSums(is.na(data)) == 0,]
 data %>% nrow()
 ```
 
-Since we still will have 8,000 data points, it is sufficient to continue our analysis
+Since we still will have 8,000 data points, it is sufficient to continue our analysis.
 
 ### 2.4.4 Removing unneeded rows
 
-We will be removing rows where the program is unrated
+We will be removing rows where the program is unrated as we cannot gauge a proper target audience without rating
 
 ```{r}
 # the number of data points before row removal
@@ -124,7 +124,7 @@ data <- data %>% filter(`Content Rating` != "Unrated")
 data %>% nrow()
 ```
 
-Because of this, one row is lost but we still have a sufficient number of data points for our analysis
+Because of this, one row is lost but we still have a sufficient number of data points for our analysis.
 
 ### 2.4.5 Restructuring our data
 
@@ -139,7 +139,7 @@ data <- data %>% select(-`Last Updated`)
 data %>% head()
 ```
 
-Due to wanting to program with modern Android features that are compatible with almost all Android devices, we limit Android version to be atleast 4.4. We also exclude the ambiguous category called "Varies with device"
+Due to wanting to program with modern Android features that are compatible with almost all Android devices, greater than 95% of them, we limit Android version to be atleast 4.4. We also exclude the ambiguous category called "Varies with device" to be able to better make results from our data
 
 ```{r}
 # number of data points before row removal
@@ -156,13 +156,16 @@ With this requirement, we have removed most of the data points in our data varia
 Now we wish to set the soonest data point to update as day zero, which is the date the data was gathered into a table before being put on Kaggle. Then we only want to look at data that was updated within the last 2 months from that as we will be actively updating our application
 
 ```{r}
+# decrease the value of days to reflect the distance from day of dataset updload and how long between updates
 data <- data %>% mutate(Days = Days - min(Days))
+# print the number of data points before we limit to just the last 2 months
 data %>% nrow()
 data <- data %>% filter(Days < 60.0)
+# print the number of data points after we limitted Days
 data %>% nrow()
 ```
 
-This leaves us with almost 1,000 data points which is still sufficient for our analysis
+This leaves us with almost 1,000 data points which is still sufficient for our analysis.
 
 Now we will turn the Installs column into a numeric column as follows for easy manipulation later
 
@@ -173,14 +176,9 @@ data <- data %>% transform(Installs = as.numeric(str_replace_all(Installs, "[,+]
 
 # 3 Exploratory Data Analysis
 
-+++++ REMOVE THIS CODE BLOCK +++++
-```{r}
-data %>% head()
-```
-
 ## 3.1 Summary Statistics
 
-NOTE: In the following graphs, I display mean as the blue line, first, second, and third quartile as the red lines and the appropriate standard deviations for the graph in purple lines.
+NOTE: In the following graphs, I display mean as the blue line; first, second, and third quartile as the red lines; and the appropriate standard deviations for the graph in purple lines.
 
 We will use the following function to calculate skewness of some of our data. This function was provided in lecture notes 22.
 
@@ -261,7 +259,7 @@ sd_df %>% select(sd_to_plot, sd_val)
 # printing several statistics
 summary(data$Reviews)
 
-# graphing the above calculated statics on Reviews limiting that reviews be less than 2 x 10^7 so it will fit on the plot
+# graphing the above calculated statics on Reviews limiting that reviews be less than 2 x 10^7 so all our statistics can fit on the plot reasonably
 data %>% filter(Reviews < 20000000) %>%
   ggplot(aes(x=Reviews)) + 
   geom_histogram(bins = 60) + 
@@ -364,7 +362,7 @@ As we can see, the Ratings Dataset does not seem to be skewed in either directio
 ## 3.2 Skew corrections of graphs
 
 In this section, we attempt to graph the several skewed datasets by log shifting them and then seeing if the resulting datasets are still skewed. 
-Here we prepare data with the log shifted data
+Here we prepare data with the log shifted calculations
 
 ```{r}
 # log shift the three skewed data to new columns for later use
@@ -372,6 +370,7 @@ data <- data %>%
   mutate(log_Days = log2(Days + 1)) %>%
   mutate(log_Reviews = log2(Reviews + 1)) %>%
   mutate(log_Installs = log2(Installs + 1))
+# display the new columns
 data %>% head()
 ```
 
@@ -409,7 +408,7 @@ data %>% compute_skew_stat(log_Reviews)
 
 ```
 
-Since the absolute value of skew is greater than 1, then the log shifted Days dataset is not a better dataset to use then before log shifting the Reviews dataset
+Since the absolute value of skew is greater than 1, then the log shifted Days dataset is not a better dataset to use then before log shifting the Reviews dataset.
 
 ### 3.2.3 Log shifted Installs
 
@@ -446,9 +445,11 @@ data %>% head()
 
 ## 3.3 Hypothesis Testing 
 
+We use 5% for our threshold as is standard in statistics and for our class for hypothesis testing.
+
 ### 3.3.1 Testing Installs based on Ratings
 
-I hypothesis that the number of installs is dependant on a high rating, in this case a rating of greater than  or equal to 4.0. Then, we can create a null hypothesis to test this as: a rating of less than 4.0 does not change the amount of install we get. More formally, 
+I hypothesis that the number of installs is dependant on a high rating, in this case a rating of greater than or equal to 4.0. Then, we can create a null hypothesis to test this as: a rating of less than 4.0 does not change the amount of install we get. More formally, 
 $$ 
 H_0: \text{Getting a low rating has no effect on installs} \to \mu = \mu_{\text{Installs}} \\
 H_1: \text{Getting a low rating has an effect on installs} \to \mu \ne \mu_{\text{Installs}}
@@ -473,8 +474,6 @@ z_score
 ```
 
 Because the z score that we calculated for our hull hypothesis testing was over 5 standard deviations from the mean of installs when ratings is low, then the probability of this event occurring is much less than 5%, thus we can reject the $H_0$ and accept $H_1$. 
-
-We use 5% for our threshold as is standard in statistics and for our class. 
 
 ### 3.3.2 Testing Ratings based on Days since last update
 
@@ -502,17 +501,17 @@ z_score <- (mean_installs - mean_rating) / sd_rating
 z_score
 ```
 
-Because the z score that we calculated for our hull hypothesis testing was under 2 standard deviations from the mean of Ratings when Days is large, then the probability of this event occurring is much greater than 5%, thus we accept the $H_0$ and instead reject $H_1$
+Because the z score that we calculated for our hull hypothesis testing was under 2 standard deviations from the mean of Ratings when Days is large, then the probability of this event occurring is much greater than 5%, thus we accept the $H_0$ and instead reject $H_1$.
 
 # 4 Machine Learning analysis
 
 ## 4.1 Linear Regression
 
-We will not attempt to put linear regression models to approximate several data values and see how is there is a correlation between predictors and responses in our models. 
+We will now attempt to put linear regression models to approximate several data values and see how if there is a correlation between predictors and responses in our models. 
 
 ### 4.1.1 Linear Regression statistics on Ratings
 
-We now try to fit a linear regression line to our data for Ratings. We then see what values from our model we believe are statistically significant enough to include in our final model. 
+We now try to fit a linear regression line to our data for Ratings. We then see what values from our model we believe are statistically significant enough to include in our final model as proper indicators that reflect change in Ratings. 
 
 ```{r, warning=FALSE}
 # fit a line to our data with Rating being output and the rest of the variables being input. 
@@ -527,7 +526,7 @@ Thus, we are now statistically confident that ratings will improve or decrease a
 
 ### 4.1.2 Linear Regression statistics on Installs
 
-We now try to fit a linear regression line to our data for Installs. We then see what values from our model we believe are statistically significant enough to include in our final model. Because we are representing Installs by its log shifted equivalence, we acknowledge that increases and decreases in log_Installs correspond to increases or decreases in Installs which lets us easily interpret the following results. 
+We now try to fit a linear regression line to our data for Installs. We then see what values from our model we believe are statistically significant enough to include in our final model as proper indicators that reflect change in Ratings. Because we are representing Installs by its log shifted equivalence, we acknowledge that increases and decreases in log_Installs correspond to increases or decreases in Installs which lets us easily interpret the following results. 
 
 ```{r, warning=FALSE}
 # fit a line to our data with Rating being output and the rest of the variables being input. 
@@ -538,8 +537,7 @@ fit_installs <- fit_installs %>% filter(p.value >= 0.05)
 fit_installs %>% knitr::kable()
 ```
 
-+++++ Fix this block to correspond to Installs rather than Ratings +++++
-Thus, we are now statistically confident that ratings will improve or decrease according to our model by the amount corresponding to the estimate of our term. Thus, Categories like COMICS, EDUCATION, and  PHOTOGRAPHY, among many others improve the Rating of a program. Other Categories like ENTERTAINMENT, FAMILY, and PARENTING, among many others, decline the Rating of a program. Beyond Categories, the Content Rating of an app will decrease the Rating of your program but choosing EVERYONE for this will demote it the least. The optimal Android Version that should be supported is atleast 5.1 with 4.4W coming as runner up. We also see that the number of installs that your program has can positively effect your programs Rating. 
+Thus, we are now statistically confident that installs will improve or decrease according to our model by the amound corresponding to reversing the log shift on estimate of our term. As stated, positive and negative estimates correspond to increase and decreases respectively in installs. Thus, Categories like BEAUTY, COMMUNICATION, and GAME, among many others improve the amount of installs of a program. Other Categories like BUSINESS, EVENTS, and FAMILY, among many others decline the amount of installs of a program. Beyond Categories, the Rating of a program will increase the amount of Installs. The content Rating of a program will improve installs the most if chosen to be EVERYONE 10+ and decreases installs the most if it is instead chosen to be EVERYONE. The Android ver that should be supported to best increase the number of installs is 7.1 and the one that most decreases the number of installs is 4.4W. 
 
 # 5 Conclusion
 
@@ -553,16 +551,10 @@ filter(fit_ratings, estimate > 0) %>% inner_join(filter(fit_installs, estimate >
 filter(fit_ratings, estimate < 0) %>% inner_join(filter(fit_installs, estimate < 0), by="term") %>% select(term, estimate.x, estimate.y) %>% print(n=1e9, width=1e9)
 ```
 
-Thus, these two tables tell us that the only properties that positively effect both are a subset of the Categories. These are: BEAUTY, EDUCATION, HEALTH AND FITNESS, HOUSE AND HOUSE, PHOTOGRAPHY, and SHOPPING. 
+Thus, these two tables tell us that the only properties that positively effect both are a subset of the Categories. These are: BEAUTY, EDUCATION, HEALTH AND FITNESS, HOUSE AND HOME, PHOTOGRAPHY, and SHOPPING. 
 The properties that negatively effect both are a subset of the Categories: AUTO AND VEHICLES, FAMILY, LIFESTYLE, MAPS AND NAVIGATION, MEDICAL, NEWS AND MAGAZINES PARENTING, and SOCIAL. Also, Content rating being EVERYONE, and Android version being either 5.0 and above, or 7.0 and above also negatively effect both. 
 
 Thus, we have seen how many different properties can effect how the rating of your program and the number of installs it has can vary. We have seen what properties to thrive for to improve rating, or number of installs, or both with statistical confidence. We have also seen how some properties relavant to your program are distributed and what those corresponding distributions are and thus, what you should expect from those values when you launch your program. 
-
-+++++ MAYBE ADD mean and other vline data for log shifted graphs +++++
-
-
-
-
 
 
 
